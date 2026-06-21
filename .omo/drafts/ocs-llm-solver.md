@@ -82,13 +82,6 @@ approach: Greenfield TypeScript Hono service that exposes an OCS-compatible answ
 ## Approval gate
 status: awaiting-approval
 pending action: write and review .omo/plans/ocs-llm-solver.md with decision-complete todos, exact commands, and real-surface QA evidence paths.
-approval received: user said "我明白了，开始执行计划".
+approval needed: user explicitly approves the derived approach/defaults or names the defaults to change.
 <!-- When exploration is exhausted and unknowns are answered, set status: awaiting-approval. -->
 <!-- That durable record is the loop guard: on a later turn read it and resume at the gate instead of re-running exploration. -->
-
-## Approval brief (zh-CN)
-我把需求按开放式新项目处理：在空仓库里做一个 TypeScript/Hono 后端服务，给 OCS 提供可订阅/可粘贴的题库配置和答题接口，同时提供独立 `/api/solve` 接口处理纯文字题与带图题。标准 OCS AnswererWrapper 文档只明确了 `title`、`type`、`options`，没有找到图片字段，所以默认方案是：OCS 标准路径先覆盖文字题；带图题通过一个可选浏览器桥接脚本抓取图片 URL/base64 后发给后端。后端先查本地题库缓存，未命中再调用可配置 LLM，并用 Zod 校验结构化答案。
-
-我采用的默认决策：不 fork OCS；不依赖未公开的 OCS 私有 API；LLM 使用 provider-agnostic 边界，密钥和模型走环境变量；所有入站/出站数据都做 schema 边界解析；不做验证码/监考/反检测/凭据抓取；第一版不做管理后台 UI。
-
-用户已批准这些默认方向并要求开始执行计划。下一步按 `.omo/plans/ocs-llm-solver.md` 进入 start-work 执行。
