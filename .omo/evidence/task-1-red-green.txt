@@ -1,0 +1,27 @@
+RED: bun test
+exit 1
+GET /health passed.
+not found failed: expected {"error":"not_found"}, received "404 Not Found".
+
+GREEN: bun test
+exit 0
+2 pass, 0 fail, 4 expect() calls.
+
+GREEN: bunx tsc --noEmit
+exit 0
+
+GREEN: bunx biome check .
+exit 0
+Checked 6 files. No fixes applied.
+
+QA: git diff --check
+exit 0
+
+QA: pure LOC
+src/app.ts 6
+src/index.ts 7
+tests/app.test.ts 16
+
+QA: no-excuse TypeScript scan
+exit 1
+Blocked by checker environment: Cannot find package 'typescript' from the skill script path.

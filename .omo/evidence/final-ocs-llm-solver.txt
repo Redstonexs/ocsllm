@@ -1,0 +1,37 @@
+Final evidence: OCS LLM solver objective
+
+Objective
+- Build a working function that connects to OCS question-bank flow, can call an LLM solver, and supports both image-containing and pure text questions.
+
+Completion evidence
+- OCS question-bank integration:
+  - src/ocs.ts generates an OCS AnswererWrapper-compatible config.
+  - src/app.ts exposes GET /api/ocs/config and POST /api/ocs/answer.
+  - tests/app.test.ts covers config shape, OCS answer success, provider failure, and malformed payloads.
+  - tests/http-server.test.ts covers OCS text answering over a real Bun HTTP listener.
+- LLM solving:
+  - src/solver.ts provides cache-backed solver orchestration.
+  - src/openai-compatible-provider.ts calls OpenAI-compatible chat-completions endpoints.
+  - src/runtime.ts selects fake or openai-compatible providers from env.
+  - tests/openai-compatible-provider.test.ts verifies text payloads, multimodal image payloads, structured answer parsing, provider failure, and a real local HTTP call to an OpenAI-compatible endpoint.
+- Text and image question support:
+  - src/schemas.ts defines discriminated text/image solve payloads.
+  - /api/solve accepts pure text and image URL/base64 requests.
+  - scripts/ocs-bridge.user.js collects title, options, and images from browser pages and calls /api/solve.
+  - tests/schemas.test.ts, tests/app.test.ts, tests/solver.test.ts, and tests/http-server.test.ts cover these paths.
+- Browser/course-origin usability:
+  - src/app.ts enables CORS globally for local browser integration.
+  - tests/app.test.ts covers preflight and solved-answer CORS headers.
+
+Final commands
+- C:\Users\13719\AppData\Roaming\npm\bun.cmd test
+  - 36 pass, 0 fail, 90 expect() calls.
+- C:\Users\13719\AppData\Roaming\npm\bunx.cmd tsc --noEmit
+  - Passed.
+- C:\Users\13719\AppData\Roaming\npm\bunx.cmd biome check .
+  - Passed, checked 18 files.
+- git diff --check
+  - Passed; only LF-to-CRLF warning for README.md.
+
+Residual note
+- No real third-party LLM key was provided, so no paid/provider-hosted model was called. The OpenAI-compatible network contract is verified with a local HTTP-compatible endpoint and the real provider implementation.

@@ -1,0 +1,78 @@
+Task 3 evidence: cache-backed solver orchestration
+
+Scope
+- Implemented a cache-backed solver seam with typed Result helpers, in-memory answer cache,
+  fake provider, and an AI SDK-ready generateObject adapter port.
+- Integrated solver request/image types with src/schemas.ts after the concurrent schema worker
+  created that file.
+- Did not edit src/schemas.ts or tests/schemas.test.ts.
+- Did not implement HTTP routes, OCS endpoints, browser bridge, or real network calls.
+
+RED
+- Command: C:\Users\13719\AppData\Roaming\npm\bun.cmd test tests/solver.test.ts
+- Exit: 1
+- Failure: Cannot find module '../src/cache' from tests/solver.test.ts.
+- Reason: expected missing seam before src/cache.ts and src/solver.ts existed.
+
+GREEN / verification
+- Command: C:\Users\13719\AppData\Roaming\npm\bun.cmd test tests/solver.test.ts
+- Exit: 0
+- Result: 5 pass, 0 fail, 13 expect() calls.
+- Covered:
+  - cache miss calls fake provider once
+  - repeated cache hit avoids second fake provider call
+  - whitespace/case/option-normalized equivalent text request hits cache
+  - configured provider failure returns typed { ok:false, error:{ kind:"provider_failure" } }
+  - image request passes URL and base64 image information through the solver seam
+
+Full gate results
+- Command: C:\Users\13719\AppData\Roaming\npm\bun.cmd test
+- Exit: 0
+- Result: 18 pass, 0 fail, 40 expect() calls.
+- Command: C:\Users\13719\AppData\Roaming\npm\bunx.cmd tsc --noEmit
+- Exit: 0
+- Result: typecheck passed with no output.
+- Command: C:\Users\13719\AppData\Roaming\npm\bunx.cmd biome check .
+- Exit: 0
+- Result: Checked 13 files. No fixes applied.
+- Command: git diff --check
+- Exit: 0
+- Result: no whitespace errors.
+- Command: TypeScript no-excuse audit for src/result.ts src/cache.ts src/solver.ts
+  src/ai-sdk-adapter.ts tests/solver.test.ts
+- Exit: 0
+- Result: No violations in 5 file(s).
+
+Pure LOC
+- src/result.ts: 9
+- src/cache.ts: 15
+- src/solver.ts: 184
+- src/ai-sdk-adapter.ts: 100
+- tests/solver.test.ts: 112
+
+Behavior notes
+- Cache key normalization lowercases and collapses whitespace for title, type, and options.
+- Image cache keys include normalized URL/base64 image information.
+- Cache hit returns source "cache", cacheStatus "hit", providerStatus "skipped".
+- Cache miss returns source "llm", cacheStatus "miss", providerStatus "success".
+- Provider throws are converted to generic typed ProviderFailure after explicit Error
+  narrowing, avoiding raw SDK error messages or stack traces in the seam result.
+- FakeAnswerProvider records readonly calls and can be configured with success or failure.
+- AiSdkAnswerProvider accepts an injected generateObject port and builds text/file message
+  parts, so tests do not require the AI SDK package, network access, or API keys.
+
+Post-review hardening
+- Caught provider exceptions now return message "provider execution failed" instead of
+  propagating raw provider error text. Configured fake failures still return their typed
+  failure payload for deterministic tests.
+- Re-ran full tests, tsc, Biome, git diff --check, no-excuse audit, and LOC check after
+  the hardening change; all remained passing.
+
+Context7 documentation
+- Checked Vercel AI SDK docs via Context7 for generateObject schema usage and image/file
+  message parts before shaping src/ai-sdk-adapter.ts.
+
+Cleanup
+- No dev server started.
+- No network calls made.
+- No temp files or API-key dependent resources created.

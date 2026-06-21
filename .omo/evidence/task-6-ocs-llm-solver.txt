@@ -1,0 +1,30 @@
+Task 6 evidence: documentation and full verification wave
+
+Documentation
+- README.md documents install/run, OCS config URL, OpenAI-compatible LLM env vars, direct text/image solve examples, base64 image format, CORS behavior, bridge usage, and verification commands.
+
+Verification
+- Command: C:\Users\13719\AppData\Roaming\npm\bun.cmd test
+- Exit: 0
+- Result: 36 pass, 0 fail, 90 expect() calls.
+- Command: C:\Users\13719\AppData\Roaming\npm\bunx.cmd tsc --noEmit
+- Exit: 0
+- Result: typecheck passed with no output.
+- Command: C:\Users\13719\AppData\Roaming\npm\bunx.cmd biome check .
+- Exit: 0
+- Result: Checked 18 files. No fixes applied.
+- Command: git diff --check
+- Exit: 0
+- Result: no whitespace errors; Git printed an LF-to-CRLF working-copy warning for README.md only.
+- Command: rg -n "\bany\b|@ts-ignore|@ts-expect-error| as (?!const\b)|!\.|\)!" src tests scripts --pcre2
+- Exit: 0
+- Result: only false-positive English text matches: "as a typed" and "as multimodal"; no type escape usage found.
+- Command: source pure LOC check
+- Exit: 0
+- Result: every src/*.ts file is below 250 pure LOC; largest is src/openai-compatible-provider.ts at 201.
+
+Live HTTP QA
+- Implemented tests/http-server.test.ts using Bun.serve with port 0.
+- Covered OCS text answer over HTTP, image solve over HTTP, and invalid JSON public error over HTTP.
+- External background server smoke test was not run because the tool safety review rejected Start-Process/Stop-Process automation.
+

@@ -1,0 +1,18 @@
+Task 4 evidence: OCS config and OCS answer endpoint
+
+Scope
+- Implemented GET /api/ocs/config through src/ocs.ts and src/app.ts.
+- Implemented POST /api/ocs/answer for OCS title/type/options text payloads.
+- OCS handler response shape returns code/question/answer on success and code/msg on solver failure.
+
+Verification
+- Command: C:\Users\13719\AppData\Roaming\npm\bun.cmd test
+- Exit: 0
+- Result: 36 pass, 0 fail, 90 expect() calls.
+- Covered:
+  - GET /api/ocs/config returns an AnswererWrapper-compatible config array.
+  - POST /api/ocs/answer returns code 1, question, answer, and structured metadata.
+  - Provider failure returns code 0 with a public msg.
+  - Malformed OCS payload returns 400 validation_error.
+  - Live HTTP service test answers OCS text requests over HTTP.
+

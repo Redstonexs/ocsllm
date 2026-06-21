@@ -1,0 +1,51 @@
+Task 2: Define question, answer, error, and OCS schemas
+
+Changed files:
+- src/schemas.ts
+- tests/schemas.test.ts
+- .omo/evidence/task-2-ocs-llm-solver.txt
+- .omo/start-work/ledger.jsonl
+
+RED:
+- Command: C:\Users\13719\AppData\Roaming\npm\bun.cmd test tests/schemas.test.ts
+- Result: exit 1
+- Evidence: Cannot find module '../src/schemas' from tests/schemas.test.ts; 0 pass, 1 fail, 1 error.
+
+GREEN:
+- Command: C:\Users\13719\AppData\Roaming\npm\bun.cmd test tests/schemas.test.ts
+- Result: exit 0
+- Evidence: 11 pass, 0 fail, 23 expect() calls.
+
+Implemented boundary schemas:
+- OcsTextRequestSchema for title/type/options with newline option parsing.
+- SolveRequestSchema as a discriminated union on kind: "text" | "image".
+- ImageInputSchema with URL and base64 variants.
+- StructuredAnswerSchema for answer metadata.
+- PublicErrorPayloadSchema for safe machine-readable public errors.
+- MAX_IMAGE_BYTES exported for base64 image validation.
+
+Malformed-input adversarial class:
+- Missing title rejected.
+- Blank title rejected after trimming.
+- Empty image array rejected for image solve requests.
+- Unsupported image/svg+xml MIME rejected for base64 images.
+- Base64 payload whose decoded byte length exceeds MAX_IMAGE_BYTES rejected.
+- Invalid base64 strings rejected before byte-size acceptance.
+
+Verification:
+- C:\Users\13719\AppData\Roaming\npm\bun.cmd test: exit 0; 18 pass, 0 fail, 40 expect() calls.
+- C:\Users\13719\AppData\Roaming\npm\bunx.cmd tsc --noEmit: exit 0.
+- C:\Users\13719\AppData\Roaming\npm\bunx.cmd biome check src/schemas.ts tests/schemas.test.ts: exit 0.
+- C:\Users\13719\AppData\Roaming\npm\bunx.cmd biome check .: exit 1, due only to concurrent solver-lane files outside this write set:
+  - src/solver.ts formatting
+  - tests/solver.test.ts import ordering
+- git diff --check: exit 0.
+- Pure LOC:
+  - src/schemas.ts: 137
+  - tests/schemas.test.ts: 212
+
+Additional notes:
+- No routes were implemented for this task.
+- No solver/cache files were edited.
+- No server was started and no cleanup was required.
+- Attempted the TypeScript no-excuse checker for owned files, but Bun returned EPERM reading the plugin script path outside the workspace.

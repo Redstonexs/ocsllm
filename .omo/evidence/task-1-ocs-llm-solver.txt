@@ -1,0 +1,113 @@
+Task 1 evidence: strict Hono/Bun service scaffold with health route
+
+RED:
+- Command: bun test tests/app.test.ts
+- Exit: 1
+- Key output:
+  bun test v1.3.14 (0d9b296a)
+  error: Cannot find module '../src/app' from 'F:\ocsllm\tests\app.test.ts'
+  0 pass
+  1 fail
+  1 error
+  Ran 1 test across 1 file. [110.00ms]
+- Interpretation: accepted red-first scaffold failure because the test named GET /health before src/app.ts existed.
+
+INSTALL:
+- Command: bun install
+- Exit: 0
+- Key output:
+  + @biomejs/biome@2.5.0
+  + @types/bun@1.3.14
+  + typescript@5.9.3 (v6.0.3 available)
+  + hono@4.12.26
+  + zod@4.4.3
+  9 packages installed [5.76s]
+  Saved lockfile
+
+GREEN:
+- Command: bun test
+- Exit: 0
+- Key output:
+  (pass) GET /health > returns ok status when the service is healthy [2.00ms]
+  1 pass
+  0 fail
+  2 expect() calls
+  Ran 1 test across 1 file. [41.00ms]
+
+TYPECHECK:
+- Command: bunx tsc --noEmit
+- Exit: 0
+- Key output: no stdout or stderr
+
+BIOME:
+- Command: bunx biome check .
+- Exit: 0
+- Key output:
+  Checked 6 files in 5ms. No fixes applied.
+
+NO-EXCUSE CHECK:
+- Command: NODE_PATH="$PWD/node_modules" bun run /c/Users/13719/.codex/plugins/cache/sisyphuslabs/omo/4.11.1/skills/programming/scripts/typescript/check-no-excuse-rules.ts src/app.ts src/index.ts tests/app.test.ts
+- Exit: 0
+- Key output:
+  No violations in 3 file(s).
+
+PURE LOC:
+- Command: awk 'FNR==1 { if (NR>1) print file ":" count; file=FILENAME; count=0 } !/^[[:space:]]*$/ && !/^[[:space:]]*(\/\/|#|--)/ { count++ } END { print file ":" count }' src/app.ts src/index.ts tests/app.test.ts
+- Exit: 0
+- Key output:
+  src/app.ts:4
+  src/index.ts:7
+  tests/app.test.ts:9
+
+LIVE SERVER:
+- Command: nohup bun run src/index.ts > /tmp/ocsllm-task1-server.log 2>&1 & printf '%s\n' "$!"
+- Exit: 0
+- PID: 1778
+- Server log:
+  ocs-llm-solver listening on http://localhost:3107/
+
+MANUAL QA:
+- Command: curl -i --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:3107/health
+- Exit: 0
+- Key output:
+  HTTP/1.1 200 OK
+  Content-Type: application/json
+  Content-Length: 15
+  {"status":"ok"}
+
+- Command: curl -i --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:3107/not-found
+- Exit: 0
+- Key output:
+  HTTP/1.1 404 Not Found
+  Content-Type: text/plain; charset=UTF-8
+  Content-Length: 13
+  404 Not Found
+
+CLEANUP:
+- Command: kill 1778
+- Exit: 0
+- Result: stopped the live QA server started for this task.
+
+ADVERSARIAL CLASSES:
+- malformed input/not-found: verified /not-found returns 404 without adding catch-all behavior.
+- dirty_worktree: inspected status before editing; existing .omo was untracked and was preserved.
+- misleading_success_output: checked status/body with curl -i, not curl exit code alone.
+- hung command: used explicit command timeouts and stopped the background server PID after QA.
+
+FINAL STATUS:
+- Todo 1 acceptance and QA passed.
+
+ROOT INDEPENDENT VERIFICATION:
+- Command: C:\Users\13719\AppData\Roaming\npm\bun.cmd test
+- Exit: 0
+- Key output: 2 pass, 0 fail, 4 expect() calls.
+- Command: C:\Users\13719\AppData\Roaming\npm\bunx.cmd tsc --noEmit
+- Exit: 0
+- Key output: no stdout/stderr.
+- Command: C:\Users\13719\AppData\Roaming\npm\bunx.cmd biome check .
+- Exit: 0
+- Key output: Checked 6 files in 7ms. No fixes applied.
+- Command: Start-Process bun.cmd run src/index.ts on port 3107, then curl.exe -i /health and /not-found.
+- Exit: 0
+- Key output: /health returned HTTP/1.1 200 OK with {"status":"ok"}; /not-found returned HTTP/1.1 404 Not Found with {"error":"not_found"}.
+- Cleanup: Stop-Process killed PID 31708.

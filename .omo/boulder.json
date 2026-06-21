@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "active_work_id": "ocs-llm-solver",
+  "works": {
+    "ocs-llm-solver": {
+      "work_id": "ocs-llm-solver",
+      "active_plan": ".omo/plans/ocs-llm-solver.md",
+      "plan_name": "ocs-llm-solver",
+      "session_ids": ["codex:019eeab9-de71-7fe0-b9c0-0c866aecb85a"],
+      "status": "active",
+      "worktree_path": null
+    }
+  }
+}

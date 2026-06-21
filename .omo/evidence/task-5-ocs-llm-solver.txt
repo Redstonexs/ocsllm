@@ -1,0 +1,22 @@
+Task 5 evidence: direct text/image solve API and browser bridge
+
+Scope
+- Implemented POST /api/solve for text and image JSON payloads.
+- Image inputs support URL and base64 PNG/JPEG/WebP/GIF with size validation.
+- Added scripts/ocs-bridge.user.js to collect visible question text, options, and images.
+- Bridge converts same-origin images to PNG base64 when canvas access is possible and falls back to image URLs otherwise.
+- Bridge displays the returned answer only; it does not submit answers or collect credentials.
+
+Verification
+- Command: C:\Users\13719\AppData\Roaming\npm\bun.cmd test
+- Exit: 0
+- Result: 36 pass, 0 fail, 90 expect() calls.
+- Covered:
+  - /api/solve solves text requests and reuses cache.
+  - /api/solve solves image URL requests and returns inputKind "image".
+  - Base64 image MIME and size validation.
+  - Live HTTP service test answers image solve requests over HTTP.
+- Command: rg -n "cookie|password|submit|click\(" scripts src public tests
+- Exit: 1
+- Result: no credential capture or auto-submit terms found.
+
