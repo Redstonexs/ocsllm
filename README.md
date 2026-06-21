@@ -21,6 +21,25 @@ bun run src/index.ts
 
 默认本地行为使用伪造提供方，并返回答案 `B`，这样无需 API key 也能稳定进行路由 QA。
 
+## 下载 Prerelease 直接运行
+
+仓库内置了 GitHub Actions workflow：`.github/workflows/prerelease.yml`。推送到 `main`/`master` 或手动运行该 workflow 后，会自动创建/覆盖名为 `prerelease` 的 GitHub 预发布版本，并上传这些下载包：
+
+- `ocs-llm-solver-linux-x64.tar.gz`
+- `ocs-llm-solver-linux-arm64.tar.gz`
+- `ocs-llm-solver-darwin-x64.tar.gz`
+- `ocs-llm-solver-darwin-arm64.tar.gz`
+- `ocs-llm-solver-windows-x64.zip`
+
+每个包都包含独立可执行文件、`config.example.env`、启动脚本、README 和 `scripts/ocs-bridge.user.js`。下载对应平台的包后：
+
+1. 解压压缩包。
+2. 复制 `config.example.env` 为 `config.env`。
+3. 按需修改 `config.env`，特别是 `OCS_PUBLIC_BASE_URL` 和 LLM 配置。
+4. Linux/macOS 运行 `./run.sh`；Windows 运行 `run.cmd`。
+
+`config.example.env` 默认使用 `OCS_LLM_PROVIDER=fake`，无需 API key 就能启动并返回测试答案 `B`。接真实 LLM 时，把 `OCS_LLM_PROVIDER` 改为 `openai-compatible`，并填写 `OCS_LLM_BASE_URL`、`OCS_LLM_MODEL`、`OCS_LLM_API_KEY`。
+
 打开这个 OCS 配置地址：
 
 ```txt
@@ -32,8 +51,9 @@ http://127.0.0.1:3107/api/ocs/config
 文字题走 OCS 标准题库接口：
 
 1. 先启动本服务，并确认 `/health` 返回正常。
-2. 如果 OCS 页面和本服务不在同一台机器上，不要使用 `127.0.0.1`，需要把服务部署到公网域名，并设置 `OCS_PUBLIC_BASE_URL` 为该域名。
-3. 打开 OCS 的题库配置/自定义题库配置入口，添加订阅链接：
+2. 如果使用 GitHub prerelease 包，先复制并编辑 `config.env`，再运行 `run.sh` 或 `run.cmd`。
+3. 如果 OCS 页面和本服务不在同一台机器上，不要使用 `127.0.0.1`，需要把服务部署到公网域名，并设置 `OCS_PUBLIC_BASE_URL` 为该域名。
+4. 打开 OCS 的题库配置/自定义题库配置入口，添加订阅链接：
 
 ```txt
 http://127.0.0.1:3107/api/ocs/config
@@ -45,7 +65,7 @@ http://127.0.0.1:3107/api/ocs/config
 https://ocs-llm.example.com/api/ocs/config
 ```
 
-4. 保存后，OCS 会把文字题的 `title`、`type`、`options` 发送到 `/api/ocs/answer`，本服务会先查本地缓存，未命中再调用 LLM，最后返回 OCS 可识别的答案。
+5. 保存后，OCS 会把文字题的 `title`、`type`、`options` 发送到 `/api/ocs/answer`，本服务会先查本地缓存，未命中再调用 LLM，最后返回 OCS 可识别的答案。
 
 带图题走浏览器桥接脚本：
 

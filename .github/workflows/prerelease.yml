@@ -1,0 +1,115 @@
+name: Build prerelease
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prerelease-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prerelease:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify
+        run: |
+          bun test
+          bunx tsc --noEmit
+          bunx biome check .
+
+      - name: Build standalone executables
+        run: |
+          mkdir -p dist/bin
+          bun build src/index.ts --compile --minify --target=bun-linux-x64 --outfile dist/bin/ocs-llm-solver-linux-x64
+          bun build src/index.ts --compile --minify --target=bun-linux-arm64 --outfile dist/bin/ocs-llm-solver-linux-arm64
+          bun build src/index.ts --compile --minify --target=bun-darwin-x64 --outfile dist/bin/ocs-llm-solver-darwin-x64
+          bun build src/index.ts --compile --minify --target=bun-darwin-arm64 --outfile dist/bin/ocs-llm-solver-darwin-arm64
+          bun build src/index.ts --compile --minify --target=bun-windows-x64 --outfile dist/bin/ocs-llm-solver-windows-x64.exe
+
+      - name: Package archives
+        run: |
+          set -euo pipefail
+          mkdir -p dist/release
+
+          package_unix() {
+            local target="$1"
+            local binary="$2"
+            local dir="dist/pkg/ocs-llm-solver-${target}"
+            mkdir -p "$dir/scripts"
+            cp "$binary" "$dir/ocs-llm-solver"
+            cp config.example.env "$dir/config.example.env"
+            cp packaging/run.sh "$dir/run.sh"
+            cp README.md "$dir/README.md"
+            cp scripts/ocs-bridge.user.js "$dir/scripts/ocs-bridge.user.js"
+            chmod +x "$dir/ocs-llm-solver" "$dir/run.sh"
+            tar -C dist/pkg -czf "dist/release/ocs-llm-solver-${target}.tar.gz" "ocs-llm-solver-${target}"
+          }
+
+          package_windows() {
+            local target="windows-x64"
+            local dir="dist/pkg/ocs-llm-solver-${target}"
+            mkdir -p "$dir/scripts"
+            cp dist/bin/ocs-llm-solver-windows-x64.exe "$dir/ocs-llm-solver.exe"
+            cp config.example.env "$dir/config.example.env"
+            cp packaging/run.cmd "$dir/run.cmd"
+            cp README.md "$dir/README.md"
+            cp scripts/ocs-bridge.user.js "$dir/scripts/ocs-bridge.user.js"
+            (cd dist/pkg && zip -r "../release/ocs-llm-solver-${target}.zip" "ocs-llm-solver-${target}")
+          }
+
+          package_unix linux-x64 dist/bin/ocs-llm-solver-linux-x64
+          package_unix linux-arm64 dist/bin/ocs-llm-solver-linux-arm64
+          package_unix darwin-x64 dist/bin/ocs-llm-solver-darwin-x64
+          package_unix darwin-arm64 dist/bin/ocs-llm-solver-darwin-arm64
+          package_windows
+
+          cat > dist/release-notes.md <<'EOF'
+          Automated prerelease build.
+
+          Each archive includes:
+          - standalone ocs-llm-solver executable
+          - config.example.env
+          - run.sh or run.cmd
+          - README.md
+          - scripts/ocs-bridge.user.js
+
+          Quick start:
+          1. Download the archive for your platform.
+          2. Extract it.
+          3. Copy config.example.env to config.env and edit provider settings if needed.
+          4. Run ./run.sh on Linux/macOS or run.cmd on Windows.
+          EOF
+
+      - name: Publish moving prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRERELEASE_TAG: prerelease
+        run: |
+          gh release delete "$PRERELEASE_TAG" --yes --cleanup-tag || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -fa "$PRERELEASE_TAG" -m "Automated prerelease for $GITHUB_SHA"
+          git push --force origin "refs/tags/$PRERELEASE_TAG"
+          gh release create "$PRERELEASE_TAG" dist/release/* \
+            --title "ocs-llm-solver prerelease" \
+            --notes-file dist/release-notes.md \
+            --prerelease
